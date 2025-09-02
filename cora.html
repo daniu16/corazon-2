@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Palabras Bonitas y Corazones</title>
+  <style>
+    html,body{height:100%;margin:0;background:#000;font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#fff;overflow:hidden}
+    .stage{position:relative;width:100%;height:100vh;cursor:pointer;overflow:hidden}
+
+    .word{position:absolute;white-space:nowrap;font-weight:700;pointer-events:none;user-select:none;opacity:0.95;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+    .pink{color:#ff74b1}
+    .red{color:#ff2b4a}
+
+    @keyframes floatSlow {
+      0% { transform: translateY(0) rotate(-10deg); }
+      50% { transform: translateY(-20px) rotate(10deg); }
+      100% { transform: translateY(0) rotate(-10deg); }
+    }
+
+    .heart{
+      position:absolute;
+      width:28px;height:28px;
+      transform-origin:center center;
+      pointer-events:none;
+      will-change: transform, opacity, top;
+      z-index:9999;
+    }
+
+    @keyframes rise {
+      0% { transform: translateY(0) scale(0.9) rotate(0deg); opacity:1 }
+      25% { transform: translateY(-40px) scale(1.05) rotate(20deg); }
+      50% { transform: translateY(-120px) scale(1) rotate(-20deg); opacity:0.95 }
+      100% { transform: translateY(-350px) scale(0.8) rotate(40deg); opacity:0 }
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-50px) scale(0.8) rotate(0deg); opacity:1; }
+      100% { transform: translateY(110vh) scale(1.2) rotate(360deg); opacity:0; }
+    }
+
+    .pop { animation: rise linear forwards; }
+    .fall { animation: fall linear forwards; }
+
+    .hint{position:fixed;left:12px;bottom:12px;background:rgba(255,255,255,0.06);color:#fff;padding:8px 12px;border-radius:8px;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="hint">Eventos: clic, doble clic, teclas, movimiento y lluvia automática de corazones</div>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+
+    const frases = [
+      'Te amo','Te quiero','Eres mi vida','Mi cielo','Mi corazón','Mi tesoro','Mi reina','Mi rey','Eres especial','Amor eterno','Te adoro','Mi sol','Mi luna','Mi estrella','Mi todo','Mi razón','Mi alegría','Mi ilusión','Te necesito','Te extraño','Te pienso','Mi destino','Mi fortuna','Mi ángel','Eres magia','Eres luz','Eres único','Eres mía','Eres mío','Te quiero v','Te amo infinito','Amor verdadero','Cariño eterno','Besos','Abrazos','Mi sueño','Contigo siempre'
+    ];
+
+    function createScatteredWords(count=120){
+      const w = window.innerWidth; const h = window.innerHeight;
+      for(let i=0;i<count;i++){
+        const span = document.createElement('span');
+        span.className = 'word ' + (Math.random()>.5? 'pink':'red');
+        span.textContent = frases[Math.floor(Math.random()*frases.length)];
+        const size = Math.round(12 + Math.random()*42);
+        span.style.fontSize = size + 'px';
+        span.style.left = Math.round(Math.random()*(w-100)) + 'px';
+        span.style.top = Math.round(Math.random()*(h-40)) + 'px';
+        span.style.transform = 'rotate(' + (Math.random()*90-45) + 'deg)';
+        span.style.opacity = (0.5 + Math.random()*0.5).toFixed(2);
+        span.style.animation = 'floatSlow ' + (5 + Math.random()*10).toFixed(1) + 's ease-in-out infinite';
+        stage.appendChild(span);
+      }
+    }
+
+    function createHeart(x, y, size, color, animClass, dur){
+      const heart = document.createElement('div');
+      heart.className = 'heart ' + animClass;
+      heart.style.left = x + 'px';
+      heart.style.top = y + 'px';
+      heart.style.width = size + 'px';
+      heart.style.height = size + 'px';
+      heart.style.animationDuration = dur + 'ms';
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 32 32');
+      svg.setAttribute('width','100%');
+      svg.setAttribute('height','100%');
+      svg.style.display = 'block';
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d','M23.6 4a6.5 6.5 0 0 0-9.3 0L12 6.3 11.7 6a6.5 6.5 0 0 0-9.3 9.1L12 29l9.6-13.9A6.5 6.5 0 0 0 23.6 4z');
+      path.setAttribute('fill', color);
+      svg.appendChild(path);
+      heart.appendChild(svg);
+
+      stage.appendChild(heart);
+      setTimeout(()=>{heart.remove();}, dur+200);
+    }
+
+    function spawnHearts(x,y,amount=35){
+      for(let i=0;i<amount;i++){
+        const color = Math.random()>.5 ? '#ff2b4a' : '#ff74b1';
+        const offsetX = (Math.random()-0.5)*120;
+        const offsetY = (Math.random()-0.5)*60;
+        const s = 14 + Math.random()*36;
+        const dur = 3000 + Math.random()*2500;
+        createHeart(x+offsetX,y+offsetY,s,color,'pop',dur);
+      }
+    }
+
+    // Lluvia de corazones
+    function rainHearts(){
+      const x = Math.random()*window.innerWidth;
+      const y = -30;
+      const color = Math.random()>.5 ? '#ff2b4a' : '#ff74b1';
+      const s = 10 + Math.random()*26;
+      const dur = 4000 + Math.random()*3000;
+      createHeart(x,y,s,color,'fall',dur);
+    }
+
+    // Eventos
+    function handleClick(e){
+      const x = e.clientX || (e.touches && e.touches[0].clientX) || window.innerWidth/2;
+      const y = e.clientY || (e.touches && e.touches[0].clientY) || window.innerHeight/2;
+      spawnHearts(x,y,40);
+    }
+
+    createScatteredWords(150);
+    window.addEventListener('click', handleClick);
+    window.addEventListener('dblclick', e => spawnHearts(e.clientX, e.clientY, 80));
+    window.addEventListener('mousemove', e => { if(Math.random()<0.05) spawnHearts(e.clientX,e.clientY,5); });
+    window.addEventListener('keydown', e => { if(e.key===' '|| e.key==='Enter'){ spawnHearts(window.innerWidth/2, window.innerHeight/2,60);} });
+    window.addEventListener('touchstart', function(ev){ ev.preventDefault(); handleClick(ev.touches[0]); }, {passive:false});
+
+    window.addEventListener('resize', ()=>{ document.querySelectorAll('.word').forEach(n=>n.remove()); createScatteredWords(150); });
+
+    // activar lluvia automática de corazones
+    setInterval(rainHearts, 300);
+  </script>
+</body>
+</html>
